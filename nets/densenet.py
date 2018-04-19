@@ -1,3 +1,4 @@
+#!coding:utf-8
 """Contains a variant of the densenet model definition."""
 
 from __future__ import absolute_import
@@ -29,11 +30,24 @@ def block(net, layers, growth, scope='block'):
         net = tf.concat(axis=3, values=[net, tmp])
     return net
 
+def transition_layer(net, layers, growth, scope='transition'):
+    """
+    We use 1×1 convolution followed by 2×2 average pooling as transition layers between two contiguous dense blocks.
+    :param net:
+    :param layers:
+    :param growth:
+    :param scope:
+    :return:
+    """
+    with tf.variable_scope(scope):
+        net = slim.conv2d(net, 4 * growth, [1, 1], padding='SAME', scope='conv1x1')
+        net = slim.avg_pool2d(net, [2, 2], stride=2, padding='VALID', scope='avgPool_1a_2x2')
+    return net
 
 def densenet(images, num_classes=1001, is_training=False,
              dropout_keep_prob=0.8,
              scope='densenet'):
-    """Creates a variant of the densenet model.
+    """Creates a variant of the densenet model.  juest  DenseNet-BC.
 
       images: A batch of `Tensors` of size [batch_size, height, width, channels].
       num_classes: the number of classes in the dataset.
@@ -51,6 +65,7 @@ def densenet(images, num_classes=1001, is_training=False,
     """
     growth = 24
     compression_rate = 0.5
+    L = 4  # In our experiments on ImageNet, we use a DenseNet-BC structure with 4 dense blocks on 224x224 input images
 
     def reduce_dim(input_feature):
         return int(int(input_feature.shape[-1]) * compression_rate)
@@ -64,6 +79,45 @@ def densenet(images, num_classes=1001, is_training=False,
             ##########################
             # Put your code here.
             ##########################
+            # a convolution with 16 (or twice the growth rate for DenseNet-BC) output channels is performed on the
+            # input images. For convolutional layers with kernel size 3x3, each side of the inputs is zero-padded
+            # by one pixel to keep the feature-map size fixed
+            net = slim.conv2d(images, 2 * growth, [7, 7], stride=2, padding='SAME', scope=scope + '_conv3x3')  # (32, 224, 224, 3) ===> (32, 112, 112, 48)
+            net = slim.max_pool2d(net, [3, 3], stride=2, padding='SAME', scope='maxPool_3x3')                 # (32, 112, 112, 48) ===> (32, 56, 56, 48)
+            end_points['input'] = net
+            # block 1 (-1, 56, 56, 48) ==> (-1, 56, 56, 48)
+            for layer in range(L - 1):
+                scope_name = 'block{}'.format(layer)
+                net = block(net, layer, growth, scope_name)
+                end_points[scope_name] = net
+                # transition_layer (-1, w, h, 48) ==> (-1, w, h, 96)
+                scope_name = 'transition{}'.format(layer)
+                net = transition_layer(net, layer, growth, scope_name)
+                end_points[scope_name] = net
+
+            # # block 2
+            # net = block(net, 1, growth)
+            # # transition_layer (-1, 28, 28, 48) ==> (-1, 14, 14, 48)
+            # net = transition_layer(net, 2, growth)
+            # # block 3
+            # net = block(net, 1, growth)
+            # # transition_layer  (-1, 14, 14, 48) ==> (-1, 7, 7, 48)
+            # net = transition_layer(net, 3, growth)
+            # block 4
+            net = block(net, L, growth)
+
+            # Final pooling and prediction
+            # At the end of the last dense block, a global average pooling is performed and then a softmax classifier is attached.
+            with tf.variable_scope('Logits'):
+                net = tf.reduce_mean(net, [1, 2], keep_dims=False, name='global_pool')
+                logits = slim.fully_connected(net, num_classes, activation_fn=None,
+                                  scope='Logits')
+                end_points['Logits'] = logits
+                end_points['Predictions'] = tf.nn.softmax(logits, name='Predictions')
+
+    print('==='*20)
+    print(logits)
+    print(end_points['Predictions'])
 
     return logits, end_points
 
