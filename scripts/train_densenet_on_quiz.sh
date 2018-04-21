@@ -42,8 +42,8 @@ python train_image_classifier.py \
   --dataset_split_name=train \
   --dataset_dir=${DATASET_DIR} \
   --model_name=densenet \
-  --max_number_of_steps=10000 \
-  --batch_size=16 \
+  --max_number_of_steps=1 \
+  --batch_size=3 \
   --save_interval_secs=120 \
   --save_summaries_secs=120 \
   --log_every_n_steps=100 \
@@ -52,13 +52,24 @@ python train_image_classifier.py \
 
 
 # Run evaluation.
-python eval_image_classifier.py \
-  --checkpoint_path=${TRAIN_DIR} \
-  --eval_dir=${TRAIN_DIR} \
-  --dataset_name=quiz \
-  --dataset_split_name=validation \
-  --dataset_dir=${DATASET_DIR} \
-  --model_name=densenet \
-  --batch_size=32 \
-  --max_num_batches=128 \
-  --eval_dir=~/temp/validation_eval_densenet
+# python eval_image_classifier.py \
+#  --checkpoint_path=${TRAIN_DIR} \
+#  --eval_dir=${TRAIN_DIR} \
+#  --dataset_name=quiz \
+#  --dataset_split_name=validation \
+#  --dataset_dir=${DATASET_DIR} \
+#  --model_name=densenet \
+#  --batch_size=32 \
+#  --max_num_batches=128 \
+#  --eval_dir=~/temp/validation_eval_densenet
+
+python train_eval_image_classifier.py \
+--dataset_name=quiz \
+--dataset_dir=/path/to/data \
+--model_name=densenet \
+--checkpoint_exclude_scopes=InceptionV4/Logits,InceptionV4/AuxLogits/Aux_logits \
+--train_dir=/path/to/log/train_ckpt \
+--learning_rate=0.1 \
+--dataset_split_name=validation \
+--eval_dir=/path/to/eval_den \
+--max_num_batches=128
