@@ -65,11 +65,12 @@ python train_image_classifier.py \
 
 python train_eval_image_classifier.py \
 --dataset_name=quiz \
---dataset_dir=/path/to/data \
+--dataset_dir=${DATASET_DIR} \
 --model_name=densenet \
 --checkpoint_exclude_scopes=InceptionV4/Logits,InceptionV4/AuxLogits/Aux_logits \
---train_dir=/path/to/log/train_ckpt \
+--train_dir=${TRAIN_DIR} \
 --learning_rate=0.1 \
 --dataset_split_name=validation \
---eval_dir=/path/to/eval_den \
---max_num_batches=128
+--eval_dir=${TRAIN_DIR} \
+--max_num_batches=128 \
+--clone_on_cpu=True
