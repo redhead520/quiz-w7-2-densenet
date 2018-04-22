@@ -138,11 +138,11 @@ def densenet(images, num_classes=1001, is_training=False,
             with tf.variable_scope('Logits'):
                 # GAP
                 net = GAP(net, keep_dims=False, scope='Global_Average_Pooling')
-
+                stddev = tf.sqrt(1.0/int(net.shape[-1]))
                 logits = slim.fully_connected(net,
                                               num_classes,
                                               activation_fn=None,
-                                              weights_initializer=trunc_normal(tf.sqrt(1.0/net.shape[-1])),
+                                              weights_initializer=trunc_normal(stddev),
                                               scope='Logits')
                 end_points['Logits'] = logits
                 end_points['Predictions'] = tf.nn.softmax(logits, name='Predictions')

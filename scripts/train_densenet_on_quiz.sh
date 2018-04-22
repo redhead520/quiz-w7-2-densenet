@@ -49,7 +49,7 @@ python train_image_classifier.py \
   --log_every_n_steps=100 \
   --optimizer=rmsprop \
   --learning_rate=0.1
-
+  --clone_on_cpu=True
 
 # Run evaluation.
 # python eval_image_classifier.py \
@@ -64,13 +64,13 @@ python train_image_classifier.py \
 #  --eval_dir=~/temp/validation_eval_densenet
 
 python train_eval_image_classifier.py \
---dataset_name=quiz \
---dataset_dir=${DATASET_DIR} \
---model_name=densenet \
---checkpoint_exclude_scopes=InceptionV4/Logits,InceptionV4/AuxLogits/Aux_logits \
---train_dir=${TRAIN_DIR} \
---learning_rate=0.1 \
---dataset_split_name=validation \
---eval_dir=${TRAIN_DIR} \
---max_num_batches=128 \
---clone_on_cpu=True
+    --dataset_name=quiz \
+    --dataset_dir=${DATASET_DIR} \
+    --model_name=densenet \
+    --checkpoint_exclude_scopes=InceptionV4/Logits,InceptionV4/AuxLogits/Aux_logits \
+    --train_dir=${TRAIN_DIR} \
+    --learning_rate=0.1 \
+    --dataset_split_name=validation \
+    --eval_dir=${TRAIN_DIR} \
+    --max_num_batches=128 \
+    --clone_on_cpu=True
